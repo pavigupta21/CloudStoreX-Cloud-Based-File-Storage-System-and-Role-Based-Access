@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CloudStoreX — Secure Cloud File Storage</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ── Header ─────────────────────────────────────────────── -->
+  <div class="header">
+    <div class="header-brand">
+      <div class="header-logo">
+        <svg viewBox="0 0 24 24">
+          <path d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/>
+        </svg>
+      </div>
+      <h2>Cloud<span>StoreX</span></h2>
+    </div>
+
+    <div class="auth-section" id="authSection">
+      <button id="loginBtn" onclick="login()">Login</button>
+
+      <div id="profileContainer" style="display:none; position:relative;">
+        <div id="profileCircle"></div>
+
+        <div id="profileDropdown" style="display:none; position:absolute; right:0; top:48px; color:black;">
+          <div id="profileEmail"></div>
+          <div id="profileRole"></div>
+          <button id="manageUsersBtn" style="display:none;" onclick="openAdminPanel()">⚙️ Manage Users</button>
+          <button id="activityLogsBtn" onclick="openActivityLogs()">📋 Activity Logs</button>
+          <button onclick="logout()">🚪 Logout</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Role Info Banner ────────────────────────────────────── -->
+  <div id="roleBanner">
+    <div class="banner-inner">
+      <div class="banner-icon" id="bannerIcon"></div>
+      <div class="banner-text">
+        <strong id="bannerTitle"></strong>
+        <p id="bannerDesc"></p>
+        <div class="banner-perms" id="bannerPerms"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Upload Section ─────────────────────────────────────── -->
+  <div class="actions" id="uploadSection">
+    <div class="upload-header">Upload New File</div>
+    <div class="upload-row">
+      <input type="file" id="fileInput" />
+    </div>
+
+    <div class="tag-container">
+      <select id="tagSelect">
+        <option value="">— Select Tag —</option>
+        <option value="academic">Academic</option>
+        <option value="finance">Finance</option>
+        <option value="hr">HR</option>
+        <option value="engineering">Engineering</option>
+        <option value="project">Project</option>
+        <option value="confidential">Confidential</option>
+      </select>
+      <button type="button" id="addTagBtn">+ Add Tag</button>
+      <div id="tagList" class="tag-list"></div>
+    </div>
+
+    <div class="upload-btn-wrap">
+      <button onclick="uploadFile()">↑ Upload File</button>
+    </div>
+  </div>
+
+  <!-- ── Filters ─────────────────────────────────────────────── -->
+  <div class="filter-section">
+    <div class="filter-group">
+      <label>Tag</label>
+      <select id="filterTag">
+        <option value="all">All Tags</option>
+        <option value="academic">Academic</option>
+        <option value="finance">Finance</option>
+        <option value="hr">HR</option>
+        <option value="engineering">Engineering</option>
+        <option value="project">Project</option>
+        <option value="confidential">Confidential</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label>Owner</label>
+      <select id="filterOwner">
+        <option value="all">All Owners</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label>Search</label>
+      <input type="text" id="searchInput" placeholder="Search file name…"
+        autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+    </div>
+  </div>
+
+  <!-- ── File Table ──────────────────────────────────────────── -->
+  <div class="table-container">
+    <table id="fileTable">
+      <thead>
+        <tr>
+          <th>File Name</th>
+          <th>Tags</th>
+          <th>Versions</th>
+          <th>Last Updated</th>
+          <th>Owner</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="fileTableBody"></tbody>
+    </table>
+  </div>
+
+  <!-- ── Toast Container ────────────────────────────────────── -->
+  <div id="toast-container"></div>
+
+  <!-- ── Auth Modal ─────────────────────────────────────────── -->
+  <div id="authModal" class="modal">
+    <div class="auth-card">
+      <div class="auth-header">
+        <h2 id="authTitle">Welcome Back</h2>
+        <p id="authSubtitle">Login to your account</p>
+      </div>
+
+      <div id="loginForm" class="auth-form">
+        <input type="email" id="loginEmail" placeholder="Email address" />
+        <input type="password" id="loginPassword" placeholder="Password" />
+        <button id="loginSubmit" class="auth-btn">Login</button>
+        <p class="auth-switch">Don't have an account? <span id="switchToSignup">Sign up</span></p>
+      </div>
+
+      <div id="signupForm" class="auth-form" style="display:none;">
+        <input type="email" id="signupEmail" placeholder="Email address" />
+        <input type="password" id="signupPassword" placeholder="Password" />
+        <input type="password" id="signupConfirmPassword" placeholder="Confirm Password" />
+        <button id="signupSubmit" class="auth-btn">Create Account</button>
+        <p class="auth-switch">Already have an account? <span id="switchToLogin">Login</span></p>
+      </div>
+
+      <div id="otpForm" class="auth-form" style="display:none;">
+        <input type="text" id="otpCode" placeholder="Enter verification code" />
+        <button id="otpSubmit" class="auth-btn">Verify Account</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Admin Modal ────────────────────────────────────────── -->
+  <div id="adminModal" class="modal">
+    <div class="auth-card" style="width:700px; max-height:80vh; overflow:auto;">
+      <div class="auth-header">
+        <h2>Manage Users</h2>
+        <p>Assign roles to registered users</p>
+      </div>
+
+      <div style="margin-bottom:12px;">
+        <input type="text" id="adminUserSearch" placeholder="Search user by email…" style="width:100%; padding:9px 12px;" />
+      </div>
+
+      <table style="width:100%; border-collapse:collapse;">
+        <thead>
+          <tr>
+            <th style="text-align:left; padding:10px 12px; background:#f7f9fe; font-size:11.5px; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:#94a3b8; border-bottom:2px solid #e2e8f4;">Email</th>
+            <th style="text-align:center; padding:10px 12px; background:#f7f9fe; font-size:11.5px; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:#94a3b8; border-bottom:2px solid #e2e8f4;">Current Role</th>
+            <th style="text-align:center; padding:10px 12px; background:#f7f9fe; font-size:11.5px; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:#94a3b8; border-bottom:2px solid #e2e8f4;">Change Role</th>
+            <th style="text-align:center; padding:10px 12px; background:#f7f9fe; font-size:11.5px; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:#94a3b8; border-bottom:2px solid #e2e8f4;">Action</th>
+          </tr>
+        </thead>
+        <tbody id="adminUserTable"></tbody>
+      </table>
+
+      <div style="margin-top:18px; text-align:right;">
+        <button onclick="closeAdminPanel()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Activity Modal ─────────────────────────────────────── -->
+  <div id="activityModal" class="modal">
+    <div class="activity-card">
+      <div class="auth-header">
+        <h2>Activity Logs</h2>
+        <p>Track all file activity across users</p>
+      </div>
+      <input type="text" id="activitySearch" placeholder="Search by user, file or action…" />
+      <div class="activity-table-container">
+        <table id="activityTable" class="activity-table">
+          <thead>
+            <tr>
+              <th>Role</th>
+              <th>User</th>
+              <th>Action</th>
+              <th>File</th>
+              <th>Date</th>
+              <th>Time</th>
+            </tr>
+          </thead>
+          <tbody id="activityTableBody"></tbody>
+        </table>
+      </div>
+      <div style="text-align:right; margin-top:16px;">
+        <button onclick="closeActivityLogs()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+
+  <!-- ── Role Banner Injection Script ───────────────────────── -->
+  <script>
+    // Intercept updateAuthUI to also render the role banner
+    const _originalUpdateAuthUI = updateAuthUI;
+    updateAuthUI = function(roleFromAPI = null) {
+      _originalUpdateAuthUI(roleFromAPI);
+      if (roleFromAPI) renderRoleBanner(roleFromAPI);
+    };
+
+    function renderRoleBanner(role) {
+      const banner   = document.getElementById('roleBanner');
+      const icon     = document.getElementById('bannerIcon');
+      const title    = document.getElementById('bannerTitle');
+      const desc     = document.getElementById('bannerDesc');
+      const permsDiv = document.getElementById('bannerPerms');
+
+      banner.className = 'roleBanner';
+      banner.style.display = 'block';
+
+      const perms = {
+        Admin: {
+          cls:   'banner-admin',
+          emoji: '🛡️',
+          label: 'Administrator Access',
+          text:  'You have full control over CloudStoreX. You can manage all files and users across the platform.',
+          chips: [
+            { label: 'Upload Files',        allow: true  },
+            { label: 'Upload New Versions', allow: true  },
+            { label: 'Download',            allow: true  },
+            { label: 'Delete Any File',     allow: true  },
+            { label: 'Share Any File',      allow: true  },
+            { label: 'Manage Users',        allow: true  },
+          ]
+        },
+        Editor: {
+          cls:   'banner-editor',
+          emoji: '✏️',
+          label: 'Editor Access',
+          text:  'You can upload and manage your own files. Delete and share are limited to files you have uploaded.',
+          chips: [
+            { label: 'Upload Files',           allow: true  },
+            { label: 'Upload New Versions',    allow: true  },
+            { label: 'Download',               allow: true  },
+            { label: 'Delete Own Files Only',  allow: true  },
+            { label: 'Share Own Files Only',   allow: true  },
+            { label: 'Delete Others\' Files',  allow: false },
+          ]
+        },
+        Viewer: {
+          cls:   'banner-viewer',
+          emoji: '👁️',
+          label: 'Viewer Access',
+          text:  'You have read-only access. You can browse, download files, and view version history.',
+          chips: [
+            { label: 'Download',            allow: true  },
+            { label: 'View Versions',       allow: true  },
+            { label: 'Upload Files',        allow: false },
+            { label: 'Delete Files',        allow: false },
+            { label: 'Share Files',         allow: false },
+          ]
+        }
+      };
+
+      const cfg = perms[role];
+      if (!cfg) return;
+
+      banner.classList.add(cfg.cls);
+      icon.textContent  = cfg.emoji;
+      title.textContent = cfg.label;
+      desc.textContent  = cfg.text;
+
+      permsDiv.innerHTML = cfg.chips.map(c =>
+        `<span class="perm-chip ${c.allow ? 'allow' : 'deny'}">
+          ${c.allow ? '✓' : '✗'} ${c.label}
+        </span>`
+      ).join('');
+    }
+  </script>
+
+</body>
+</html>
