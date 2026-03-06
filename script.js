@@ -293,6 +293,40 @@ async function deleteFile(fileId) {
 
 }
 
+// async function shareFile(fileId) {
+//     const response = await fetch(
+//         `https://p591y4w1m9.execute-api.ap-south-1.amazonaws.com/share`,
+//         {
+//             method: "POST",
+//             headers: {
+//                 "Content-Type": "application/json",
+//                 "Authorization": "Bearer " + localStorage.getItem("id_token")
+//             },
+//             body: JSON.stringify({
+//                 file_id: fileId,
+//                 expiry_seconds: 300
+//             })
+//         }
+//     );
+
+//     const data = await response.json();
+
+//     if (!data.share_url) {
+//         showToast("Error generating share link", "error");
+//         console.log(data);
+//         return;
+//     }
+
+    
+//     navigator.clipboard.writeText(data.share_url)
+//     .then(() => {
+//         showToast("Share link copied to clipboard (valid 5 minutes)");
+//     })
+//     .catch(() => {
+//         showToast("Link generated but could not copy automatically", "error");
+//     });
+// }
+
 async function shareFile(fileId) {
     const response = await fetch(
         `https://p591y4w1m9.execute-api.ap-south-1.amazonaws.com/share`,
@@ -317,17 +351,66 @@ async function shareFile(fileId) {
         return;
     }
 
-    
-    navigator.clipboard.writeText(data.share_url)
-    .then(() => {
-        showToast("Share link copied to clipboard (valid 5 minutes)");
-    })
-    .catch(() => {
-        showToast("Link generated but could not copy automatically", "error");
-    });
+    showShareModal(data.share_url);
 }
+function showShareModal(link) {
 
+    const modal = document.createElement("div");
+    modal.id = "shareModalOverlay";
 
+    modal.style.position = "fixed";
+    modal.style.top = "0";
+    modal.style.left = "0";
+    modal.style.width = "100%";
+    modal.style.height = "100%";
+    modal.style.background = "rgba(0,0,0,0.4)";
+    modal.style.display = "flex";
+    modal.style.alignItems = "center";
+    modal.style.justifyContent = "center";
+    modal.style.zIndex = "9999";
+
+    modal.innerHTML = `
+        <div style="
+            background:white;
+            padding:20px;
+            border-radius:10px;
+            width:420px;
+            box-shadow:0 10px 30px rgba(0,0,0,0.2);
+            font-family:sans-serif;
+        ">
+            <h3>Share File</h3>
+            <p style="font-size:13px;color:#666;">Link valid for 5 minutes</p>
+
+            <input id="shareLinkInput"
+                style="width:100%;padding:8px;border:1px solid #ccc;border-radius:6px"
+                value="${link}" readonly />
+
+            <div style="margin-top:15px;text-align:right">
+                <button onclick="copyShareLink()"
+                    style="background:#4f46e5;color:white;border:none;padding:8px 14px;border-radius:6px;cursor:pointer">
+                    Copy Link
+                </button>
+
+                <button onclick="closeShareModal()"
+                    style="margin-left:8px;padding:8px 14px;border-radius:6px;border:1px solid #ccc;cursor:pointer">
+                    Close
+                </button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+}
+function closeShareModal() {
+    const modal = document.getElementById("shareModalOverlay");
+    if (modal) modal.remove();
+}
+function copyShareLink() {
+    const input = document.getElementById("shareLinkInput");
+    input.select();
+    document.execCommand("copy");
+    showToast("Share link copied! Valid for 5 minutes.");
+}
 document.addEventListener("DOMContentLoaded", function () {
 
     const tagSelect = document.getElementById("tagSelect");
